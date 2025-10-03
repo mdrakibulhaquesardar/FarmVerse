@@ -55,4 +55,5 @@ export const INITIAL_GAME_STATE: PlayerState = {
     wheat: 5,
   },
   farm: initialFarm,
+  weather: 'Sunny',
 };

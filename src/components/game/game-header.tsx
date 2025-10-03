@@ -15,6 +15,7 @@ import { CoinIcon } from "../icons/coin"
 import { GemIcon } from "../icons/gem"
 import { SidebarTrigger } from "../ui/sidebar"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { WeatherDisplay } from "./weather-display"
 
 export function GameHeader() {
   const state = useGameState()
@@ -23,6 +24,7 @@ export function GameHeader() {
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
       {isMobile && <SidebarTrigger />}
+      <WeatherDisplay />
       <div className="flex items-center gap-4 ml-auto">
         <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-1.5 text-sm font-medium">
           <CoinIcon className="h-5 w-5 text-yellow-500" />

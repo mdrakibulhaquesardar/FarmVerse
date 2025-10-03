@@ -1,14 +1,15 @@
 "use client";
 
 import React, { createContext, useReducer, useContext, ReactNode, useEffect } from 'react';
-import type { PlayerState } from '@/lib/types';
+import type { PlayerState, Weather } from '@/lib/types';
 import { INITIAL_GAME_STATE, CROPS } from '@/lib/game-data';
 
 type GameAction =
   | { type: 'PLANT'; plotIndex: number; cropId: string }
   | { type: 'HARVEST'; plotIndex: number }
   | { type: 'SELL_ITEM'; itemId: string; quantity: number; price: number }
-  | { type: 'UPDATE_PLOT'; plotIndex: number; status: 'ready' };
+  | { type: 'UPDATE_PLOT'; plotIndex: number; status: 'ready' }
+  | { type: 'CHANGE_WEATHER'; weather: Weather };
 
 const GameStateContext = createContext<PlayerState | undefined>(undefined);
 const GameDispatchContext = createContext<React.Dispatch<GameAction> | undefined>(undefined);
@@ -54,27 +55,54 @@ const gameReducer = (state: PlayerState, action: GameAction): PlayerState => {
         newFarm[action.plotIndex] = { ...newFarm[action.plotIndex], status: action.status };
         return { ...state, farm: newFarm };
     }
+    case 'CHANGE_WEATHER': {
+        return { ...state, weather: action.weather };
+    }
     default:
       return state;
   }
 };
 
+const WEATHER_TYPES: Weather[] = ['Sunny', 'Rainy', 'Cloudy', 'Stormy'];
+const WEATHER_CHANGE_INTERVAL = 60000; // 1 minute
+
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(gameReducer, INITIAL_GAME_STATE);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    // Crop growth logic
+    const growthInterval = setInterval(() => {
         state.farm.forEach((plot, index) => {
             if (plot.status === 'planted' && plot.cropId && plot.plantedAt) {
                 const crop = CROPS[plot.cropId];
-                if (Date.now() > plot.plantedAt + crop.growthTime * 1000) {
+                let growthTime = crop.growthTime * 1000;
+                
+                // Weather effect
+                if (state.weather === 'Rainy') {
+                    growthTime *= 0.8; // 20% faster growth
+                }
+                if (state.weather === 'Stormy') {
+                    growthTime *= 1.5; // 50% slower growth
+                }
+
+                if (Date.now() > plot.plantedAt + growthTime) {
                     dispatch({ type: 'UPDATE_PLOT', plotIndex: index, status: 'ready' });
                 }
             }
         });
     }, 1000);
-    return () => clearInterval(interval);
-  }, [state.farm]);
+
+    // Weather change logic
+    const weatherInterval = setInterval(() => {
+        const newWeather = WEATHER_TYPES[Math.floor(Math.random() * WEATHER_TYPES.length)];
+        dispatch({ type: 'CHANGE_WEATHER', weather: newWeather });
+    }, WEATHER_CHANGE_INTERVAL);
+
+    return () => {
+        clearInterval(growthInterval);
+        clearInterval(weatherInterval);
+    };
+  }, [state.farm, state.weather]);
 
   return (
     <GameStateContext.Provider value={state}>

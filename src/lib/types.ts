@@ -24,9 +24,12 @@ export type FarmPlot = {
   status: 'empty' | 'planted' | 'ready';
 };
 
+export type Weather = 'Sunny' | 'Rainy' | 'Cloudy' | 'Stormy';
+
 export type PlayerState = {
   coins: number;
   gems: number;
   inventory: Inventory;
   farm: FarmPlot[];
+  weather: Weather;
 };
