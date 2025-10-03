@@ -1,7 +1,7 @@
-import type { Crop, Product, PlayerState, FarmPlot } from './types';
+import type { Crop, Product, PlayerState, FarmPlot, Animal, AnimalCoop } from './types';
 import { WheatIcon } from '@/components/icons/wheat';
 import { ChickenIcon } from '@/components/icons/chicken';
-import { HardHat } from 'lucide-react';
+import { HardHat, Egg } from 'lucide-react';
 
 export const CROPS: Record<string, Crop> = {
   wheat: {
@@ -36,17 +36,36 @@ export const PRODUCTS: Record<string, Product> = {
     name: 'Egg',
     description: 'A fresh egg from a happy chicken.',
     basePrice: 15,
-    icon: ChickenIcon,
+    icon: Egg,
   },
 };
 
-export const ALL_ITEMS = {...CROPS, ...PRODUCTS};
+export const ANIMALS: Record<string, Animal> = {
+    chicken: {
+        id: 'chicken',
+        name: 'Chicken',
+        description: 'A fluffy chicken that lays eggs.',
+        basePrice: 50, // Price to buy a chicken
+        product: 'egg',
+        productionTime: 300, // 5 minutes
+        icon: ChickenIcon,
+    }
+}
+
+export const ALL_ITEMS = {...CROPS, ...PRODUCTS, ...ANIMALS};
 
 const initialFarm: FarmPlot[] = Array(9).fill({
   cropId: null,
   plantedAt: null,
   status: 'empty',
 });
+
+const initialCoops: AnimalCoop[] = Array(4).fill({
+    animalId: null,
+    lastCollectedAt: null,
+    status: 'empty'
+});
+
 
 export const INITIAL_GAME_STATE: PlayerState = {
   coins: 100,
@@ -55,5 +74,6 @@ export const INITIAL_GAME_STATE: PlayerState = {
     wheat: 5,
   },
   farm: initialFarm,
+  coops: initialCoops,
   weather: 'Sunny',
 };

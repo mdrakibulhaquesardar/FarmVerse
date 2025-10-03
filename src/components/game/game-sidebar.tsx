@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Store, Menu } from "lucide-react";
+import { Home, Store, Menu, Bird } from "lucide-react";
 import {
   Sidebar,
   SidebarHeader,
@@ -19,6 +19,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Farm" },
+  { href: "/dashboard/coops", icon: Bird, label: "Animal Coops" },
   { href: "/dashboard/marketplace", icon: Store, label: "Marketplace" },
 ];
 

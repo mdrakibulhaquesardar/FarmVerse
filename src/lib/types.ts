@@ -14,6 +14,12 @@ export interface Product extends Item {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 }
 
+export interface Animal extends Item {
+  product: string; // id of the product (e.g., 'egg')
+  productionTime: number; // in seconds
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+}
+
 export type Inventory = {
   [itemId: string]: number;
 };
@@ -24,6 +30,12 @@ export type FarmPlot = {
   status: 'empty' | 'planted' | 'ready';
 };
 
+export type AnimalCoop = {
+  animalId: string | null;
+  lastCollectedAt: number | null;
+  status: 'empty' | 'occupied' | 'ready';
+};
+
 export type Weather = 'Sunny' | 'Rainy' | 'Cloudy' | 'Stormy';
 
 export type PlayerState = {
@@ -31,5 +43,6 @@ export type PlayerState = {
   gems: number;
   inventory: Inventory;
   farm: FarmPlot[];
+  coops: AnimalCoop[];
   weather: Weather;
 };
