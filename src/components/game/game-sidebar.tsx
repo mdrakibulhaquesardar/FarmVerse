@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Store, Menu, Bird } from "lucide-react";
+import { Home, Store, Bird } from "lucide-react";
 import {
   Sidebar,
   SidebarHeader,

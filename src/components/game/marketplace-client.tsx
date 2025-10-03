@@ -1,18 +1,14 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameState, useGameDispatch } from '@/context/game-context';
 import { ALL_ITEMS } from '@/lib/game-data';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getDynamicPriceAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, TrendingUp, Info } from 'lucide-react';
-import type { DynamicPriceOutput } from '@/ai/flows/dynamic-marketplace-pricing';
-import { Badge } from '@/components/ui/badge';
+import { Loader2, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-
 
 export default function MarketplaceClient() {
     const state = useGameState();
@@ -21,49 +17,50 @@ export default function MarketplaceClient() {
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState<string | null>(null);
-    const [isLoadingPrice, setIsLoadingPrice] = useState(false);
-    const [priceData, setPriceData] = useState<DynamicPriceOutput | null>(null);
+    const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+    const [priceReasoning, setPriceReasoning] = useState("");
 
     const playerInventory = Object.entries(state.inventory).filter(([, quantity]) => quantity > 0);
 
-    const handleGetPrice = async (itemId: string) => {
+    const calculatePrice = (itemId: string) => {
         const item = ALL_ITEMS[itemId];
         if (!item) return;
 
-        setIsLoadingPrice(true);
-        setPriceData(null);
-        try {
-            const result = await getDynamicPriceAction({
-                item: item.name,
-                supply: state.inventory[itemId] || 0,
-                demand: Math.floor(Math.random() * 50) + 10, // Simulated demand
-                basePrice: item.basePrice,
-            });
-            setPriceData(result);
-        } catch (error) {
-            toast({
-                variant: 'destructive',
-                title: 'Error getting price',
-                description: 'Could not fetch the dynamic price. Please try again.',
-            });
-        } finally {
-            setIsLoadingPrice(false);
-        }
-    };
+        const supply = state.inventory[itemId] || 1;
+        // Simulate demand without AI. Generate a random number for demand.
+        const demand = Math.floor(Math.random() * 50) + 10; 
+        
+        let price = item.basePrice;
+        let reasoning = "The price is based on the current market conditions. ";
 
+        if (demand > supply * 1.5) {
+            price *= 1.25; // Price increases by 25% if demand is much higher than supply
+            reasoning += "Demand is high, so the price has increased.";
+        } else if (supply > demand * 1.5) {
+            price *= 0.75; // Price decreases by 25% if supply is much higher than demand
+            reasoning += "There's a lot of supply, so the price has decreased.";
+        } else {
+             reasoning += "Supply and demand are relatively balanced.";
+        }
+
+        const finalPrice = Math.max(1, parseFloat(price.toFixed(2))); // Ensure price is at least 1
+        setCurrentPrice(finalPrice);
+        setPriceReasoning(reasoning);
+    };
+    
     const handleSell = () => {
-        if (!selectedItem || !priceData) return;
+        if (!selectedItem || currentPrice === null) return;
         
         dispatch({
             type: 'SELL_ITEM',
             itemId: selectedItem,
             quantity: 1, // Sell one at a time for simplicity
-            price: priceData.suggestedPrice,
+            price: currentPrice,
         });
 
         toast({
             title: 'Item Sold!',
-            description: `You sold 1 ${ALL_ITEMS[selectedItem].name} for ${priceData.suggestedPrice} coins.`,
+            description: `You sold 1 ${ALL_ITEMS[selectedItem].name} for ${currentPrice} coins.`,
         });
         setIsDialogOpen(false);
     };
@@ -71,8 +68,8 @@ export default function MarketplaceClient() {
     const openSellDialog = (itemId: string) => {
         setSelectedItem(itemId);
         setIsDialogOpen(true);
-        setPriceData(null);
-        handleGetPrice(itemId);
+        setCurrentPrice(null);
+        calculatePrice(itemId);
     };
 
     return (
@@ -105,7 +102,7 @@ export default function MarketplaceClient() {
                     }) : (
                         <TableRow>
                             <TableCell colSpan={4} className="text-center h-24">
-                                Your inventory is empty. Harvest some crops to sell!
+                                Your inventory is empty. Harvest some crops or collect products to sell!
                             </TableCell>
                         </TableRow>
                     )}
@@ -122,24 +119,24 @@ export default function MarketplaceClient() {
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
-                            {isLoadingPrice && (
+                            {currentPrice === null && (
                                 <div className="flex items-center justify-center p-8">
                                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                                     <span className="ml-2">Calculating price...</span>
                                 </div>
                             )}
-                            {priceData && (
+                            {currentPrice !== null && (
                                 <div className="space-y-4">
                                     <div className="text-center">
-                                        <p className="text-sm text-muted-foreground">Suggested Price</p>
-                                        <p className="text-4xl font-bold text-primary">{priceData.suggestedPrice.toFixed(2)}</p>
+                                        <p className="text-sm text-muted-foreground">Current Market Price</p>
+                                        <p className="text-4xl font-bold text-primary">{currentPrice.toFixed(2)}</p>
                                         <p className="text-xs text-muted-foreground">coins per unit</p>
                                     </div>
                                     <Alert>
                                         <Info className="h-4 w-4" />
-                                        <AlertTitle>Economist's Note</AlertTitle>
+                                        <AlertTitle>Market Analysis</AlertTitle>
                                         <AlertDescription>
-                                            {priceData.reasoning}
+                                            {priceReasoning}
                                         </AlertDescription>
                                     </Alert>
                                 </div>
@@ -147,8 +144,8 @@ export default function MarketplaceClient() {
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                            <Button onClick={handleSell} disabled={isLoadingPrice || !priceData}>
-                                Sell 1 Unit for {priceData ? priceData.suggestedPrice.toFixed(2) : '...'} coins
+                            <Button onClick={handleSell} disabled={currentPrice === null}>
+                                Sell 1 Unit for {currentPrice ? currentPrice.toFixed(2) : '...'} coins
                             </Button>
                         </DialogFooter>
                     </DialogContent>
