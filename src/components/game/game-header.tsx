@@ -16,16 +16,41 @@ import { GemIcon } from "../icons/gem"
 import { SidebarTrigger } from "../ui/sidebar"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { WeatherDisplay } from "./weather-display"
+import { getXpForNextLevel } from "@/lib/game-data"
+import { Progress } from "../ui/progress"
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip"
+import { Star } from "lucide-react"
 
 export function GameHeader() {
   const state = useGameState()
   const isMobile = useIsMobile();
+
+  const xpForNextLevel = getXpForNextLevel(state.level);
+  const xpProgress = (state.xp / xpForNextLevel) * 100;
 
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
       {isMobile && <SidebarTrigger />}
       <WeatherDisplay />
       <div className="flex items-center gap-4 ml-auto">
+        <TooltipProvider>
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-1.5 text-sm font-medium w-36">
+                  <Star className="h-5 w-5 text-yellow-400" />
+                  <div className="flex flex-col w-full">
+                    <span className="text-xs -mb-1 text-left">Lvl {state.level}</span>
+                    <Progress value={xpProgress} className="h-2" />
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                  <p>{state.xp} / {xpForNextLevel} XP</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
         <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-1.5 text-sm font-medium">
           <CoinIcon className="h-5 w-5 text-yellow-500" />
           <span>{state.coins.toLocaleString()}</span>

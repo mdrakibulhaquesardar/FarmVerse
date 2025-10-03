@@ -45,4 +45,6 @@ export type PlayerState = {
   farm: FarmPlot[];
   coops: AnimalCoop[];
   weather: Weather;
+  level: number;
+  xp: number;
 };

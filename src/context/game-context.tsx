@@ -2,7 +2,7 @@
 
 import React, { createContext, useReducer, useContext, ReactNode, useEffect } from 'react';
 import type { PlayerState, Weather } from '@/lib/types';
-import { INITIAL_GAME_STATE, CROPS, ANIMALS } from '@/lib/game-data';
+import { INITIAL_GAME_STATE, CROPS, ANIMALS, getXpForNextLevel } from '@/lib/game-data';
 
 type GameAction =
   | { type: 'PLANT'; plotIndex: number; cropId: string }
@@ -12,7 +12,8 @@ type GameAction =
   | { type: 'CHANGE_WEATHER'; weather: Weather }
   | { type: 'BUY_ANIMAL'; coopIndex: number; animalId: string }
   | { type: 'COLLECT_PRODUCT'; coopIndex: number }
-  | { type: 'UPDATE_COOP'; coopIndex: number; status: 'ready' };
+  | { type: 'UPDATE_COOP'; coopIndex: number; status: 'ready' }
+  | { type: 'ADD_XP', amount: number };
 
 
 const GameStateContext = createContext<PlayerState | undefined>(undefined);
@@ -40,8 +41,10 @@ const gameReducer = (state: PlayerState, action: GameAction): PlayerState => {
       const newInventory = { ...state.inventory };
       const currentAmount = newInventory[plot.cropId] || 0;
       newInventory[plot.cropId] = currentAmount + 1;
-
-      return { ...state, farm: newFarm, inventory: newInventory };
+      
+      const xpGained = 10;
+      let newState = { ...state, farm: newFarm, inventory: newInventory };
+      return gameReducer(newState, { type: 'ADD_XP', amount: xpGained });
     }
     case 'SELL_ITEM': {
       const currentAmount = state.inventory[action.itemId] || 0;
@@ -86,13 +89,31 @@ const gameReducer = (state: PlayerState, action: GameAction): PlayerState => {
       const newInventory = { ...state.inventory };
       const currentAmount = newInventory[animal.product] || 0;
       newInventory[animal.product] = currentAmount + 1;
-
-      return { ...state, coops: newCoops, inventory: newInventory };
+      
+      const xpGained = 15;
+      let newState = { ...state, coops: newCoops, inventory: newInventory };
+      return gameReducer(newState, { type: 'ADD_XP', amount: xpGained });
     }
     case 'UPDATE_COOP': {
         const newCoops = [...state.coops];
         newCoops[action.coopIndex] = { ...newCoops[action.coopIndex], status: action.status };
         return { ...state, coops: newCoops };
+    }
+    case 'ADD_XP': {
+        let newXp = state.xp + action.amount;
+        let newLevel = state.level;
+        let newCoins = state.coins;
+        
+        let xpForNextLevel = getXpForNextLevel(newLevel);
+        
+        while (newXp >= xpForNextLevel) {
+            newLevel++;
+            newXp -= xpForNextLevel;
+            newCoins += newLevel * 50; // Level up reward
+            xpForNextLevel = getXpForNextLevel(newLevel);
+        }
+
+        return { ...state, xp: newXp, level: newLevel, coins: newCoins };
     }
     default:
       return state;

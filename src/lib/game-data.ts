@@ -76,4 +76,10 @@ export const INITIAL_GAME_STATE: PlayerState = {
   farm: initialFarm,
   coops: initialCoops,
   weather: 'Sunny',
+  level: 1,
+  xp: 0,
 };
+
+export const getXpForNextLevel = (level: number) => {
+    return Math.floor(level * 100 * 1.2);
+}
