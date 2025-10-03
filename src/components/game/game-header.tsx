@@ -38,9 +38,9 @@ export function GameHeader() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-1.5 text-sm font-medium w-36">
-                  <Star className="h-5 w-5 text-yellow-400" />
-                  <div className="flex flex-col w-full">
-                    <span className="text-xs -mb-1 text-left">Lvl {state.level}</span>
+                  <Star className="h-5 w-5 text-yellow-400 flex-shrink-0" />
+                  <div className="flex flex-col w-full gap-1">
+                    <span className="text-xs text-left">Lvl {state.level}</span>
                     <Progress value={xpProgress} className="h-2" />
                   </div>
                 </div>
